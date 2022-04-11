@@ -16,24 +16,42 @@ class REM_Currency_Switcher
 	}
 
     function currency_switcher_menu( $items, $args ) {
-        $savedOptions = get_option( 'rem_currency_options' );
-        $html = '';
-        if ( isset($instance['title']) ) {
-            echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
-        } 
-        if ($savedOptions && is_array($savedOptions)) {
-            $default_currency_code = rem_get_option('currency', 'USD');
-        
-            $html .= '<li class="menu-item"><form action="">';
-            $html .= '<select name="currency" id="" class="form-control" onchange="this.form.submit()">';
-            $html .= '<option value="'. esc_attr( $default_currency_code ) .'">'. esc_html( rem_get_currency_name( $default_currency_code ) .' ('. rem_get_currency_symbol( $default_currency_code ) .')' ) .'</option>';
-            foreach ($savedOptions as $data) {
-                $html .= '<option value="'. esc_attr( $data['code'] ) .'">'. esc_html( rem_get_currency_name( $data['code'] ) .' ('. rem_get_currency_symbol( $data['code'] ) .')' )  .'</option>';
+        $savedCurrencies = get_option( 'rem_currency_options' );
+        $settings = get_option( 'rem_currency_settings' );
+
+        if (isset($settings['menu']) && $settings['menu'] == 'enable') {
+            $currencies = rem_get_all_currencies();
+            if ($savedCurrencies && is_array($savedCurrencies)) {
+                $default_currency_code = rem_get_option('currency', 'USD');
+            
+            if ($savedCurrencies && is_array($savedCurrencies)) {
+                $default_currency_code = rem_get_option('currency', 'USD');
+                ob_start();
+            ?>
+            <li class="menu-item rem-currency-switcher-menu">
+                <form action="">
+                    <select name="rem_currency" id="" class="form-control" onchange="this.form.submit()">
+                        <option value=""><?php _e( 'Default Currency', 'rem-currency-switcher' ) ?></option>
+                        <?php foreach ($currencies as $code => $label) {
+                            if (array_key_exists($code, $savedCurrencies)) { ?>
+                                <option value="<?php echo esc_attr( $code ) ?>" <?php echo (isset($_GET['rem_currency']) && $_GET['rem_currency'] == $code) ? 'selected' : '' ; ?>>
+                                    <?php echo esc_html( $label );  ?>
+                                    ( <?php echo rem_get_currency_symbol( $code ); ?> )
+                                </option>                               
+                            <?php }
+                        } ?>
+                    </select>
+                </form>
+            </li>
+            <?php }
+                $html = ob_get_clean();
             }
-            $html .= '</select>';
-            $html .= '</form></li>';
-        } 
-        return $items.$html;
+
+            return $items.$html;
+            
+        } else {
+            return $items;
+        }
     }
 	function menu_pages(){
 		add_submenu_page( 'edit.php?post_type=rem_property', 'Currency Switcher', __( 'Currency Switcher', 'rem-currency-switcher' ), 'manage_options', 'rem_currency_switcher', array($this, 'render_cs_menu_page') );
@@ -63,9 +81,10 @@ class REM_Currency_Switcher
     	}
 
         if (isset($_REQUEST['settings']['schedule'])) {
-            // wp_clear_scheduled_hook( 'rem_currency_switcher_live_fetch' );
-            // wp_schedule_event( time(), $_REQUEST['settings']['schedule'], 'rem_currency_switcher_live_fetch' );
+            wp_clear_scheduled_hook( 'rem_currency_switcher_live_fetch' );
+            wp_schedule_event( time(), $_REQUEST['settings']['schedule'], 'rem_currency_switcher_live_fetch' );
         }
+        
         $this->fetch_live_rates();
     	die(0);
     }
@@ -92,9 +111,11 @@ class REM_Currency_Switcher
         $api = $settings['api'];
         $provider = $settings['provider'];
         foreach ($currencies as $to_currency => $data) {
-            $rate = get_from_provider($provider, $to_currency, $api);
+            $rate = $this->get_from_provider($provider, $to_currency, $api);
             if ($rate) {
                 $currencies[$to_currency]['rate'] = $rate;
+            } else {
+                $currencies[$to_currency]['rate'] = 1;
             }
         }
         update_option('rem_currency_options', $currencies);
@@ -131,7 +152,7 @@ class REM_Currency_Switcher
                     if (count($matches) > 0) {
                         $request = isset($matches[1]) ? $matches[1] : 1;
                     } else {
-                        $request = sprintf(__("no data for %s", 'rem-currency-switcher'), $this->escape($code));
+                        $request = false;
                     }
                 }
 
@@ -151,7 +172,7 @@ class REM_Currency_Switcher
                 if (isset($res->rate)) {
                     $request = floatval($res->rate);
                 } else {
-                    $request = sprintf(__("no data for %s", 'currency-switcher'), $this->escape($_REQUEST['currency_name']));
+                    $request = false;
                 }
                 break;
 
@@ -175,7 +196,7 @@ class REM_Currency_Switcher
                 if (!empty($currency_data[$query_str]['val'])) {
                     $request = $currency_data[$query_str]['val'];
                 } else {
-                    $request = sprintf(esc_html__("no data for %s", 'currency-switcher'), $this->escape($to_currency));
+                    $request = false;
                 }
 				break;
 			

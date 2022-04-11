@@ -7,6 +7,7 @@
 				<th>Provider</th>
 				<th>API Key</th>
 				<th>Schedule</th>
+				<th>Switcher in Menu</th>
 			</tr>
 			<tr>
 				<td>
@@ -22,9 +23,15 @@
 				</td>
 				<td>
 					<select class="form-control schedule">
-						<option value="hourly">Hourly</option>
-						<option value="twicedaily">Twice a Day</option>
-						<option value="daily">Once in a Day</option>
+						<option value="hourly" <?php echo (isset($savedSettings['schedule']) && $savedSettings['schedule'] == 'hourly') ? 'selected' : ''; ?>>Hourly</option>
+						<option value="twicedaily" <?php echo (isset($savedSettings['schedule']) && $savedSettings['schedule'] == 'twicedaily') ? 'selected' : ''; ?>>Twice a Day</option>
+						<option value="daily" <?php echo (isset($savedSettings['schedule']) && $savedSettings['schedule'] == 'daily') ? 'selected' : ''; ?>>Once in a Day</option>
+					</select>
+				</td>
+				<td>
+					<select class="form-control menu-switcher">
+						<option value="disable" <?php echo (isset($savedSettings['menu']) && $savedSettings['menu'] == 'disable') ? 'selected' : ''; ?>>Disable</option>
+						<option value="enable" <?php echo (isset($savedSettings['menu']) && $savedSettings['menu'] == 'enable') ? 'selected' : ''; ?>>Enable</option>
 					</select>
 				</td>
 			</tr>
@@ -108,6 +115,9 @@
 						</td>
 						<td>
 							<input type="number" class="form-control currency-decimals">
+						</td>
+						<td>
+							
 						</td>
 						<td>
 							<a href="#" class="btn btn-danger delete-btn">Remove</a>

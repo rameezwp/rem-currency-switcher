@@ -37,6 +37,7 @@ jQuery(document).ready(function($) {
 			api: $('.api-key').val(),
 			provider: $('.api-provider').val(),
 			schedule: $('.schedule').val(),
+			menu: $('.menu-switcher').val(),
 		}
 
 		$.post(ajaxurl, {action: 'rem_currency_options_save', data: currencyData, settings: settings }, function(resp) {
