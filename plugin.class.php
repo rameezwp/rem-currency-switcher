@@ -11,8 +11,30 @@ class REM_Currency_Switcher
 		add_action( 'wp_ajax_rem_currency_options_save', array($this, 'save_currency_options' ) );
         add_action( 'rem_currency_switcher_live_fetch', array($this, 'fetch_live_rates' ) );
 		add_filter( 'rem_property_price', array($this, 'render_converted_price'), 20, 4 );
+
+        add_filter('wp_nav_menu_items', array($this, 'currency_switcher_menu'), 10, 2);
 	}
 
+    function currency_switcher_menu( $items, $args ) {
+        $savedOptions = get_option( 'rem_currency_options' );
+        $html = '';
+        if ( isset($instance['title']) ) {
+            echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
+        } 
+        if ($savedOptions && is_array($savedOptions)) {
+            $default_currency_code = rem_get_option('currency', 'USD');
+        
+            $html .= '<li class="menu-item"><form action="">';
+            $html .= '<select name="currency" id="" class="form-control" onchange="this.form.submit()">';
+            $html .= '<option value="'. esc_attr( $default_currency_code ) .'">'. esc_html( rem_get_currency_name( $default_currency_code ) .' ('. rem_get_currency_symbol( $default_currency_code ) .')' ) .'</option>';
+            foreach ($savedOptions as $data) {
+                $html .= '<option value="'. esc_attr( $data['code'] ) .'">'. esc_html( rem_get_currency_name( $data['code'] ) .' ('. rem_get_currency_symbol( $data['code'] ) .')' )  .'</option>';
+            }
+            $html .= '</select>';
+            $html .= '</form></li>';
+        } 
+        return $items.$html;
+    }
 	function menu_pages(){
 		add_submenu_page( 'edit.php?post_type=rem_property', 'Currency Switcher', __( 'Currency Switcher', 'rem-currency-switcher' ), 'manage_options', 'rem_currency_switcher', array($this, 'render_cs_menu_page') );
 	}
