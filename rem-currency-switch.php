@@ -21,6 +21,8 @@ require_once('plugin.class.php');
 define('REM_CS_PATH', untrailingslashit(plugin_dir_path( __FILE__ )) );
 define('REM_CS_URL', untrailingslashit(plugin_dir_url( __FILE__ )) );
 
+require_once( REM_CS_PATH.'/inc/currency-widget.php');
+
 if( class_exists('REM_Currency_Switcher') && defined('REM_URL')){
     $rem_currency_switcher = new REM_Currency_Switcher;
 	if (defined('REM_PATH')) {

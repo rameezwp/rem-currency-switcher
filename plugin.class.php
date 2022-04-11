@@ -48,7 +48,7 @@ class REM_Currency_Switcher
     	die(0);
     }
 
-    function render_converted_price($return, $price, $args, $price_digits){
+    function render_converted_price($return, $price, $args, $price_digits = ''){
     	if (isset($_GET['rem_currency']) && $_GET['rem_currency'] != '') {
     		$code = $_GET['rem_currency'];
             $currencies = get_option( 'rem_currency_options' );
