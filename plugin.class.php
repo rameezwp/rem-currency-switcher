@@ -214,9 +214,9 @@ class REM_Currency_Switcher
 
 		if(isset($saved_options[$code])){
 			$settings = $saved_options[$code];
-			$decimals = $settings['decimals'];
-			$decimal_separator = $settings['dsep'];
-			$thousand_separator = $settings['tsep'];
+			$decimals = ($settings['decimals'] != '') ? $settings['decimals'] : 0;
+			$decimal_separator = ($settings['dsep'] != '') ? $settings['dsep'] : '.';
+			$thousand_separator = ($settings['tsep'] != '') ? $settings['tsep'] : ',';
 			$price_format = $this->get_price_format($settings['position']);
 			$price   = apply_filters( 'formatted_rem_price', number_format( $price, $decimals, $decimal_separator, $thousand_separator ), $price, $decimals, $decimal_separator, $thousand_separator );
 

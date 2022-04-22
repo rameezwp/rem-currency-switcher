@@ -2,11 +2,14 @@
 	<?php $savedSettings = get_option( 'rem_currency_settings' ); ?>
 	<h2>REM - Currency Switcher</h2>
 	<div class="ich-settings-main-wrap">
+		<div class="alert alert-info">
+			Real Estate Manager's default currency is set as <strong><?php echo $default_currency_code = rem_get_option('currency', 'USD'); ?></strong> and you don't need to add this to the list below. You can configure the default currency <a href="<?php echo admin_url('edit.php?post_type=rem_property&page=rem_settings'); ?>">here</a>.
+		</div>
 		<table class="table table-bordered">
 			<tr>
 				<th>Provider</th>
 				<th>API Key</th>
-				<th>Schedule</th>
+				<th>Schedule (When to auto update)</th>
 				<th>Switcher in Menu</th>
 			</tr>
 			<tr>

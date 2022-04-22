@@ -4,7 +4,7 @@ jQuery(document).ready(function($) {
 
 	$('.currency-table').on('click', '.add-btn', function(event) {
 		event.preventDefault();
-		$(this).closest('tr').clone(true).appendTo('.currency-table');
+		$(this).closest('tr').clone(true).find('input').val('').end().appendTo('.currency-table');
 	});
 
 	$('.currency-table').on('click', '.delete-btn', function(event) {
