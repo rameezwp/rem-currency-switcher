@@ -73,7 +73,6 @@ class REM_Currency_Switcher
     function save_currency_options(){
     	if (isset($_REQUEST['data'])) {
     		update_option( 'rem_currency_options', $_REQUEST['data'] );
-    		echo 'Settings Saved';
     	}
 
     	if (isset($_REQUEST['settings'])) {
@@ -85,7 +84,10 @@ class REM_Currency_Switcher
             wp_schedule_event( time(), $_REQUEST['settings']['schedule'], 'rem_currency_switcher_live_fetch' );
         }
         
-        $this->fetch_live_rates();
+        $resp = $this->fetch_live_rates();
+
+        echo wp_json_encode( $resp );
+
     	die(0);
     }
 
@@ -110,93 +112,56 @@ class REM_Currency_Switcher
         $currencies = get_option( 'rem_currency_options' );
         $api = $settings['api'];
         $provider = $settings['provider'];
+        $to_currencies = array();
         foreach ($currencies as $to_currency => $data) {
-            $rate = $this->get_from_provider($provider, $to_currency, $api);
-            if ($rate) {
-                $currencies[$to_currency]['rate'] = $rate;
-            } else {
-                $currencies[$to_currency]['rate'] = 1;
-            }
+            $to_currencies[] = $to_currency;
         }
-        update_option('rem_currency_options', $currencies);
+
+        $rates = $this->get_from_provider($provider, $to_currencies, $api);
+
+        if ($rates['status'] == 'success' && !empty($rates['data'])) {
+            foreach($rates['data'] as $currency => $data){
+                $currencies[$currency]['rate'] = $data['value'];
+            }
+            update_option('rem_currency_options', $currencies);
+        }
+
+        return $rates;
     }
 
-    function get_from_provider($provider, $to_currency, $api){
+    function get_from_provider($provider, $to_currencies, $api){
         $from_currency = urlencode(rem_get_option('currency', 'USD'));
-        $to_currency = urlencode($to_currency);
+        $to_currencies = urlencode(implode(",", $to_currencies));
+
+        $response = array(
+            'status'    => 'error',
+            'message'   => '',
+            'data'   => array(),
+        );
 
 		switch ($provider) {
-			case 'yahoo':
-                $date = current_time('timestamp', true);
-                $yql_query_url = 'https://query1.finance.yahoo.com/v8/finance/chart/' . $from_currency . $this->escape($to_currency) . '=X?symbol=' . $from_currency . $this->escape($to_currency) . '%3DX&period1=' . ( $date - 60 * 86400 ) . '&period2=' . $date . '&interval=1d&includePrePost=false&events=div%7Csplit%7Cearn&lang=en-US&region=US&corsDomain=finance.yahoo.com';
+			case 'currencyapi':
+                if (!$api) {
+                    $response['message'] = esc_html__("Please provide the API key", 'rem-currency-switcher');
+                    break;
+                }
+                $curr_url = 'https://api.currencyapi.com/v3/latest?apikey=' . $api . '&base_currency=' . $from_currency . '&currencies=' . $to_currencies;
                 if (function_exists('curl_init')) {
-                    $res = $this->file_get_contents_curl($yql_query_url);
+                    $res = $this->file_get_contents_curl($curr_url);
                 } else {
-                    $res = file_get_contents($yql_query_url);
+                    $res = file_get_contents($curr_url);
                 }
 
                 $data = json_decode($res, true);
-                $result = isset($data['chart']['result'][0]['indicators']['quote'][0]['open']) ? $data['chart']['result'][0]['indicators']['quote'][0]['open'] : ( isset($data['chart']['result'][0]['meta']['previousClose']) ? array($data['chart']['result'][0]['meta']['previousClose']) : array() );
 
-                if (count($result) && is_array($result)) {
-                    $request = end($result);
-                }
-				break;
-
-            case 'google':
-                $url = 'https://www.google.com/async/currency_update?yv=2&async=source_amount:1,source_currency:' . $from_currency . ',target_currency:' . $to_currency . ',chart_width:270,chart_height:94,lang:en,country:vn,_fmt:jspb';
-                $html = $this->get_response($url);
-                if ($html) {
-                    preg_match('/CurrencyUpdate\":\[\[(.+?)\,/', $html, $matches);
-
-                    if (count($matches) > 0) {
-                        $request = isset($matches[1]) ? $matches[1] : 1;
-                    } else {
-                        $request = false;
-                    }
+                if (isset($data['data'])) {
+                    $response['status'] = 'success';
+                    $response['data'] = $data['data'];
+                    $response['message'] = 'Settings Saved!';
                 }
 
-                break;
-
-            case 'appspot':
-                $url = 'http://rate-exchange.appspot.com/currency?from=' . $from_currency . '&to=' . $to_currency;
-
-                if (function_exists('curl_init')) {
-                    $res = $this->file_get_contents_curl($url);
-                } else {
-                    $res = file_get_contents($url);
-                }
-
-
-                $res = json_decode($res);
-                if (isset($res->rate)) {
-                    $request = floatval($res->rate);
-                } else {
-                    $request = false;
-                }
-                break;
-
-			case 'free-currency':
-                $query_str = sprintf("%s_%s", $from_currency, $to_currency);
-                $key = $api;
-                if (!$key) {
-                    $request = esc_html__("Please use the API key", 'rem-currency-switcher');
-                    break;
-                }
-                $url = "http://free.currencyconverterapi.com/api/v3/convert?q={$query_str}&compact=y&apiKey={$key}";
-
-                if (function_exists('curl_init')) {
-                    $res = $this->file_get_contents_curl($url);
-                } else {
-                    $res = file_get_contents($url);
-                }
-
-                $currency_data = json_decode($res, true);
-
-                if (!empty($currency_data[$query_str]['val'])) {
-                    $request = $currency_data[$query_str]['val'];
-                } else {
-                    $request = false;
+                if (!$response) {
+                    $response['message'] = sprintf(esc_html__("no data for %s", 'rem-currency-switcher'), $to_currencies);
                 }
 				break;
 			
@@ -206,7 +171,7 @@ class REM_Currency_Switcher
 
 		}
 
-		return $request;
+		return $response;
     }
 
 	function get_formatted_price( $price, $code ) {

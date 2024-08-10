@@ -3,7 +3,7 @@
  * Plugin Name: REM - Currency Switcher
  * Plugin URI: https://webcodingplace.com/rem-currency-switcher/
  * Description: Live currency rates conversion for Real Estate Manager
- * Version: 1.0
+ * Version: 2.0
  * Author: WebCodingPlace
  * Author URI: https://webcodingplace.com/
  * License: GPLv2 or later

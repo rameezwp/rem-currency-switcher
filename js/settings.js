@@ -41,8 +41,9 @@ jQuery(document).ready(function($) {
 		}
 
 		$.post(ajaxurl, {action: 'rem_currency_options_save', data: currencyData, settings: settings }, function(resp) {
-			swal('Done', 'Saving Info', 'success');
+			console.log(resp);
+			swal(resp.message, '', resp.status);
 			window.location.reload();
-		});
+		}, 'json');
 	});
 });

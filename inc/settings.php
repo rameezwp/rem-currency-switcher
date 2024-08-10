@@ -15,10 +15,7 @@
 			<tr>
 				<td>
 					<select class="form-control api-provider">
-						<option value="google" <?php echo (isset($savedSettings['provider']) && $savedSettings['provider'] == 'google') ? 'selected' : ''; ?>>Google</option>
-						<option value="yahoo" <?php echo (isset($savedSettings['provider']) && $savedSettings['provider'] == 'yahoo') ? 'selected' : ''; ?>>Yahoo</option>
-						<option value="appspot" <?php echo (isset($savedSettings['provider']) && $savedSettings['provider'] == 'appspot') ? 'selected' : ''; ?>>Appspot</option>
-						<option value="free-currency" <?php echo (isset($savedSettings['provider']) && $savedSettings['provider'] == 'free-currency') ? 'selected' : ''; ?>>Free Currency Converter API</option>
+						<option value="currencyapi" <?php echo (isset($savedSettings['provider']) && $savedSettings['provider'] == 'currencyapi') ? 'selected' : ''; ?>>currencyapi.com</option>
 					</select>
 				</td>
 				<td>
